@@ -49,7 +49,7 @@ int  First_EFF_B_Found = 0;                 /* Merker fuer erstes B in EFF-Datei
 int  PauseGSEOutput = 0;                    /* Merker fuer Pausieren der Ausgabe E -> B         */
 int  interval=4;                          /* merge interval     */
 int distance_calculation=0;                              /*use 0 - haversine formula 1 - original formula for distance calculation*/
-/* Als Argument muss der Filename bergeben werden */
+/* Als Argument muss der Filename übergeben werden */
 
 void strip_ext(char *fname)
 {
@@ -92,6 +92,7 @@ double dist_haversine(double lon1, double lat1, double lon2, double lat2)
 
 double dist_old(double lon1, double lat1, double lon2, double lat2)
 {
+	printf("old");
 	double phi1 = lat1*TO_RAD;
 	double phi2 = lat2*TO_RAD;
 	double lambda1 = lon1*TO_RAD;
@@ -103,35 +104,32 @@ double dist_old(double lon1, double lat1, double lon2, double lat2)
 	return R_EARTH/1000 * c; //get km
 }
 
-int schreibeGPS(void)
+int writeGPS(void)
 {
 	static double lat1, lon1;
 	double lat2, lon2, dist;
-	//double a,c,dphi,phi1,phi2,dlambda,lambda1,lambda2;
-	//double Re = 6.3781E6; // Earths radius in m
-		if((id == 0) || (EFFdata[2][0] == 'B') || (EFFdata[2][0] == 'R')){
-			lat1 = strtod(GPSdata[1], NULL);
-			lon1 = strtod(GPSdata[2], NULL);
-			dist = 0;
-		}else{
-			lat2 = strtod(GPSdata[1], NULL);
-			lon2 = strtod(GPSdata[2], NULL);
-			if (distance_calculation == 0)
-			{
-				printf("Haversine");
-				dist = dist_haversine(lon1,lat1,lon2,lat2);
-			}
-			else
-			{
-				dist = dist_old(lon1,lat1,lon2,lat2);
-			}
-			printf("%f", dist);
-			
-			if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
-			if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
-			fprintf(fpGSE, "%04d", ++id);
-			fprintf(fpGSE, "\t%s\t%s\t%s\t%6.3f\t%s", GPSdata[0], GPSdata[1], GPSdata[2], dist, GPSdata[3]);
+	if((id == 0) || (EFFdata[2][0] == 'B') || (EFFdata[2][0] == 'R')){
+		lat1 = strtod(GPSdata[1], NULL);
+		lon1 = strtod(GPSdata[2], NULL);
+		dist = 0;
+	}
+	else{
+		lat2 = strtod(GPSdata[1], NULL);
+		lon2 = strtod(GPSdata[2], NULL);
+	
+		if (distance_calculation == 0)
+		{
+			dist = dist_haversine(lon1,lat1,lon2,lat2);
 		}
+		else
+		{
+			dist = dist_old(lon1,lat1,lon2,lat2);
+		}
+	}
+	if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
+	if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
+	fprintf(fpGSE, "%04d", ++id);
+	fprintf(fpGSE, "\t%s\t%s\t%s\t%6.3f\t%s", GPSdata[0], GPSdata[1], GPSdata[2], dist, GPSdata[3]);
     return(1);
 }
 
@@ -468,7 +466,7 @@ int wiederholeSIGintervall = 0;
                     do {
                         /* 21 Feb 2004 JD: Merker setzen, fuer erstes B in EFF-Datei */
                         if (findeEFFzeit(hh, mm, ss)) First_EFF_B_Found = 1;
-                        schreibeGPS();
+                        writeGPS();
 
                         /* Die Eintr„ge im SIG-File suchen */
                         if (findeSIGzeit(hh, mm, ss)) {
