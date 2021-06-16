@@ -9,6 +9,10 @@
 
 #define DBG 0
 
+//some constants and functions
+#define R_EARTH 6.3781E6 //in meters!
+#define TO_RAD (M_PI / 180)
+
 #if AUDIO_VOR
 
 /* Audio VOR format */
@@ -43,7 +47,8 @@ int  rc;                                    /* Return code, 0 ist jeweils OK    
 int  id = 0;                                /* lfd. Nummer in GSE-Ausgabedatei                  */
 int  First_EFF_B_Found = 0;                 /* Merker fuer erstes B in EFF-Datei                */
 int  PauseGSEOutput = 0;                    /* Merker fuer Pausieren der Ausgabe E -> B         */
-int  interval=4;                          /* merge interval                                   */
+int  interval=4;                          /* merge interval     */
+int distance_calculation=0;                              /*use 0 - haversine formula 1 - original formula for distance calculation*/
 /* Als Argument muss der Filename bergeben werden */
 
 void strip_ext(char *fname)
@@ -68,42 +73,65 @@ int showhelp(void)
            return(1);
 }
 
+double dist_haversine(double lon1, double lat1, double lon2, double lat2)
+{
+	double dx, dy, dz;
+	double ph1 = lat1;
+	double ph2 = lat2;
+	double th1 = lon1;
+	double th2 = lon2;
+	
+	ph1 -= ph2;
+	ph1 *= TO_RAD, th1 *= TO_RAD, th2 *= TO_RAD;
+ 
+	dz = sin(th1) - sin(th2);
+	dx = cos(ph1) * cos(th1) - cos(th2);
+	dy = sin(ph1) * cos(th1);
+	return asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * R_EARTH/1000; //get km
+}
+
+double dist_old(double lon1, double lat1, double lon2, double lat2)
+{
+	double phi1 = lat1*TO_RAD;
+	double phi2 = lat2*TO_RAD;
+	double lambda1 = lon1*TO_RAD;
+	double lambda2 = lon2*TO_RAD;
+	double dphi = phi2-phi1;
+	double dlambda = lambda2-lambda1;
+	double a = pow(sin(dphi/2),2)+cos(phi1)*cos(phi2)*pow(sin(dlambda/2),2); //pow(x,2) is x^2
+	double c = 2*atan2(sqrt(a),sqrt(1-a));
+	return R_EARTH/1000 * c; //get km
+}
+
 int schreibeGPS(void)
 {
-/* UK Distanz-Berechnung 31.01.04 */
-/* 21 Feb 2004 JD: Variablen hierher verschoben, Code aufgeraeumt */
-static double lat1, lon1;
-double lat2, lon2, dist;
-double a,c,dphi,phi1,phi2,dlambda,lambda1,lambda2;
-double Re = 6.3781E6; // Earths radius in m
-    if((id == 0) || (EFFdata[2][0] == 'B') || (EFFdata[2][0] == 'R')){
-        lat1 = strtod(GPSdata[1], NULL);
-        lon1 = strtod(GPSdata[2], NULL);
-        dist = 0;
-    }else{
-        lat2 = strtod(GPSdata[1], NULL);
-        lon2 = strtod(GPSdata[2], NULL);
-        /* convert to radians */
-        phi1 = lat1*M_PI / 180;
-        phi2 = lat2*M_PI / 180;
-        lambda1 = lon1*M_PI / 180;
-        lambda2 = lon2*M_PI / 180;
-        dphi = phi2-phi1;
-        dlambda = lambda2-lambda1;
-        a = pow(sin(dphi/2),2)+cos(phi1)*cos(phi2)*pow(sin(dlambda/2),2); //pow(x,2) is x^2
-        c = 2*atan2(sqrt(a),sqrt(1-a));
-        dist = Re * c/1000; //get km
-        lat1 = lat2;
-        lon1 = lon2;
-    }
-    /* Ende der Distanzberechnung       */
-    /* ---------------  UK  ----------  */
-
-    if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
-    if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
-    fprintf(fpGSE, "%04d", ++id);
-    fprintf(fpGSE, "\t%s\t%s\t%s\t%6.3f\t%s", GPSdata[0], GPSdata[1], GPSdata[2], dist, GPSdata[3]);
-
+	static double lat1, lon1;
+	double lat2, lon2, dist;
+	//double a,c,dphi,phi1,phi2,dlambda,lambda1,lambda2;
+	//double Re = 6.3781E6; // Earths radius in m
+		if((id == 0) || (EFFdata[2][0] == 'B') || (EFFdata[2][0] == 'R')){
+			lat1 = strtod(GPSdata[1], NULL);
+			lon1 = strtod(GPSdata[2], NULL);
+			dist = 0;
+		}else{
+			lat2 = strtod(GPSdata[1], NULL);
+			lon2 = strtod(GPSdata[2], NULL);
+			if (distance_calculation == 0)
+			{
+				printf("Haversine");
+				dist = dist_haversine(lon1,lat1,lon2,lat2);
+			}
+			else
+			{
+				dist = dist_old(lon1,lat1,lon2,lat2);
+			}
+			printf("%f", dist);
+			
+			if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
+			if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
+			fprintf(fpGSE, "%04d", ++id);
+			fprintf(fpGSE, "\t%s\t%s\t%s\t%6.3f\t%s", GPSdata[0], GPSdata[1], GPSdata[2], dist, GPSdata[3]);
+		}
     return(1);
 }
 
@@ -563,7 +591,7 @@ int main(int argc, char ** argv)
     printf("%s (c) Geo-X, %s\n", argv[0], __DATE__);
 	printf("Setting coordinate interval to %d seconds\n",interval);
 	
-    strip_ext(filename); //in place change
+    strip_ext(filename); //in place removal of file extension
     sprintf(GPSfile, "%s.GPS",   filename);
     sprintf(GSEfile, "%s.GSE",   filename);
 
