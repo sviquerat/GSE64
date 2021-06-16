@@ -33,6 +33,7 @@
 char GPSfile[80], SIGfile[80], EFFfile[80], GSEfile[80]; /* Dateinamen der Eingabedateien       */
 FILE *fpGPS, *fpSIG, *fpEFF, *fpGSE;                     /* Filepointer der Eingabedateien      */
 char *filename;
+char *distance_calculation;                              /*Methd: HAVER - Haversine (default) OLD: Old vesrion */
 char zeit[10];                              /* Zeitstring, nach dem in den Dateien gesucht wird */
 char GPSdata[7][80];                        /* Datenfelder in der GPS-Datei                     */
 char GPSzeit[10];                           /* Zeit vom GPS                                     */
@@ -48,8 +49,6 @@ int  id = 0;                                /* lfd. Nummer in GSE-Ausgabedatei  
 int  First_EFF_B_Found = 0;                 /* Merker fuer erstes B in EFF-Datei                */
 int  PauseGSEOutput = 0;                    /* Merker fuer Pausieren der Ausgabe E -> B         */
 int  interval=4;                          /* merge interval     */
-int distance_calculation=0;                              /*use 0 - haversine formula 1 - original formula for distance calculation*/
-/* Als Argument muss der Filename Å¸bergeben werden */
 
 void strip_ext(char *fname)
 {
@@ -117,7 +116,7 @@ int writeGPS(void)
 		lat2 = strtod(GPSdata[1], NULL);
 		lon2 = strtod(GPSdata[2], NULL);
 	
-		if (distance_calculation == 0)
+		if (strcmp(distance_calculation, "HAVER") == 0)
 		{
 			dist = dist_haversine(lon1,lat1,lon2,lat2);
 		}
@@ -553,14 +552,16 @@ int main(int argc, char ** argv)
 {
 	static const struct option long_options[] =
     {
-        { "gsefile", required_argument,       0, 'f' },
-        { "interval", optional_argument,       0, 'i' },
+        { "gsefile", required_argument,0, 'f' },
+        { "interval", optional_argument,0, 'i' },
+        { "distance", optional_argument,0, 'd' },
 		{0}
     };
 	
 	int c,index,val;
+	distance_calculation = "HAVER";
 	
-	while ((c = getopt_long(argc, argv,"f:i::",long_options, &index)) != -1)
+	while ((c = getopt_long(argc, argv,"f:i::d::",long_options, &index)) != -1)
     switch (c)
       {
 		case 'f':
@@ -577,6 +578,9 @@ int main(int argc, char ** argv)
 			{
 				interval=val;
 			}
+			break;
+		case 'd': 
+			distance_calculation = optarg;
 			break;
 		case 0: 
 			showhelp();
