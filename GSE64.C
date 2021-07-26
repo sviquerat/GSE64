@@ -34,15 +34,15 @@ char GPSfile[80], SIGfile[80], EFFfile[80], GSEfile[80]; /* Dateinamen der Einga
 FILE *fpGPS, *fpSIG, *fpEFF, *fpGSE;                     /* Filepointer der Eingabedateien      */
 char *filename;
 char *distance_calculation;                              /*Methd: HAVER - Haversine (default) OLD: Old vesrion */
-char zeit[10];                              /* Zeitstring, nach dem in den Dateien gesucht wird */
+char timestring[10];                              /* Zeitstring, nach dem in den Dateien gesucht wird */
 char GPSdata[7][80];                        /* Datenfelder in der GPS-Datei                     */
-char GPSzeit[10];                           /* Zeit vom GPS                                     */
+char GPStime[10];                           /* timestring vom GPS                                     */
 char SIGdata[21][80];                       /* Datenfelder in der SIG-Datei                     */
-char SIGzeit[10];                           /* Zeit vom SIG-Eintrag                             */
-int  SIGfilecntr = 0;                       /* ZÑhler fÅr SIG-Dateien                           */
+char SIGtime[10];                           /* timestring vom SIG-Eintrag                             */
+int  SIGfilecntr = 0;                       /* counter for SIG files                           */
 char EFFdata[14][80];                       /* Datenfelder in der EFF-Datei                     */
 char EFFcopy[14][80];                       /* Kopie der letzt geschriebenen EFF-Datenfelder    */
-char EFFzeit[10];                           /* Zeit vom EFF-Eintrag                             */
+char EFFtime[10];                           /* timestring vom EFF-Eintrag                             */
 int  EFFfilecntr = 0;                       /* ZÑhler fÅr EFF-Dateien                           */
 int  rc;                                    /* Return code, 0 ist jeweils OK                    */
 int  id = 0;                                /* lfd. Nummer in GSE-Ausgabedatei                  */
@@ -192,9 +192,9 @@ int n;
 
     for (n = 0; n < 4; n++) {
         s = ss + n;
-        sprintf(zeit, "%02d:%02d:%02d", hh, mm, s);
-        if(strstr(GPSdata[0], zeit)){
-            //printf("%d %s\n", n, zeit);
+        sprintf(timestring, "%02d:%02d:%02d", hh, mm, s);
+        if(strstr(GPSdata[0], timestring)){
+            //printf("%d %s\n", n, timestring);
             return(1); /* Gefunden */
         }
     } /* endfor */
@@ -220,7 +220,7 @@ int  n = 0;
         while(*p == ' ') p++;  /* FÅhrende Blanks lîschen */
         sprintf(GPSdata[n], "%s", p);
     }
-    sprintf(GPSzeit, "%s", (GPSdata[0]+11));
+    sprintf(GPStime, "%s", (GPSdata[0]+11));
 
     return(1);
 }
@@ -232,10 +232,10 @@ int n;
 
     for (n = 0; n < 4; n++) {
         s = ss + n;
-        sprintf(zeit, "%02d:%02d:%02d", hh, mm, s);
-        //printf("%s %s\n", SIGdata[3], zeit);
-        if(strstr(SIGzeit, zeit)){
-            //printf("%d %s\n", n, zeit);
+        sprintf(timestring, "%02d:%02d:%02d", hh, mm, s);
+        //printf("%s %s\n", SIGdata[3], timestring);
+        if(strstr(SIGtime, timestring)){
+            //printf("%d %s\n", n, timestring);
             return(1); /* Gefunden */
         }
     } /* endfor */
@@ -303,7 +303,7 @@ int  n, m;
         //printf("n=%d : %s\n", n, SIGdata[n]);
         n++;
     } /* endwhile */
-    sprintf(SIGzeit, "%s", (SIGdata[3]+11));
+    sprintf(SIGtime, "%s", (SIGdata[3]+11));
 
     return(1);
 }
@@ -315,9 +315,9 @@ int n;
 
     for (n = 0; n < 4; n++) {
         s = ss + n;
-        sprintf(zeit, "%02d:%02d:%02d", hh, mm, s);
-        if(strstr(EFFzeit, zeit)){
-            //printf("%d %s\n", n, zeit);
+        sprintf(timestring, "%02d:%02d:%02d", hh, mm, s);
+        if(strstr(EFFtime, timestring)){
+            //printf("%d %s\n", n, timestring);
 
             /* 31 Maerz 2004 - JD: Wenn "E" oder "C" -> Stop der GSE-Dateiausgabe bis wieder ein "B" oder "R" kommt */
             if (EFFdata[2][0] == 'E') PauseGSEOutput = 1;   /* Anhalten     */
@@ -419,7 +419,7 @@ int  n, m;
         } /* endif */
     } /* endwhile */
 
-    sprintf(EFFzeit, "%s", (EFFdata[3]+11));
+    sprintf(EFFtime, "%s", (EFFdata[3]+11));
 
 #if DBG
 for (n = 0; n < 13; ++n)
@@ -459,8 +459,8 @@ int wiederholeSIGintervall = 0;
         for (mm = 0; mm < 60; mm++) {
             for (ss = 0; ss < 60; ss += interval) {
                 if (writeGPStime(hh, mm, ss)) {
-                    sprintf(zeit, "%02d:%02d:%02d", hh, mm, ss);
-                    /* Einen GPS-Zeit-Eintrag gefunden, jetzt die anderen Dateien danach durchsuchen */
+                    sprintf(timestring, "%02d:%02d:%02d", hh, mm, ss);
+                    /* Einen GPS-timestring-Eintrag gefunden, jetzt die anderen Dateien danach durchsuchen */
                     /* Der Block wird wiederholt, wenn mehrere SIG-Zeilen im 4-Sekunden-Intervall liegen */
                     do {
                         /* 21 Feb 2004 JD: Merker setzen, fuer erstes B in EFF-Datei */
@@ -471,7 +471,7 @@ int wiederholeSIGintervall = 0;
                         if (findSIGtime(hh, mm, ss)) {
                             /* Eine passende Zeile gefunden */
                             SIGfound = 1;
-                            //printf("%s GPSzeit: %s SIGzeit: %s\n", zeit, GPSzeit, SIGzeit);
+                            //printf("%s GPStime: %s SIGtime: %s\n", timestring, GPStime, SIGtime);
                             schreibeSIG();
 
                             /* Die nÑchste Zeile fÅr weitere PrÅfungen einlesen */
@@ -499,18 +499,18 @@ int wiederholeSIGintervall = 0;
                             /* Keine zugehîrige Zeile gefunden */
                             SIGfound = 0;
                             writeSIGdummies();
-                            while (strcmp(GPSzeit, SIGzeit) > 0) {
-                                /* Es ist eine LÅcke in der GPS-Zeit aufgetreten, es mÅssen SIG-Zeilen Åberlesen werden */
+                            while (strcmp(GPStime, SIGtime) > 0) {
+                                /* Es ist eine LÅcke in der GPS-timestring aufgetreten, es mÅssen SIG-Zeilen Åberlesen werden */
                                 if (!readSIGline()) break; //return (1);
                             } /* endwhile */
-                            //printf("   %s GPSzeit: %s SIGzeit: %s\n", zeit, GPSzeit, SIGzeit);
+                            //printf("   %s GPStime: %s SIGtime: %s\n", timestring, GPStime, SIGtime);
                         }
 
                         /* Die EintrÑge im EFF-File suchen */
                         /* 21 Feb 2004 JD: EFF-Zeilen mit C werden ignoriert */
                         if (findeFFtime(hh, mm, ss) && (EFFdata[2][0] != 'C')) {
                             /* Eine passende Zeile gefunden */
-                            //printf("%s GPSzeit: %s SIGzeit: %s  EFFzeit: %s\n", zeit, GPSzeit, SIGzeit, EFFzeit);
+                            //printf("%s GPStime: %s SIGtime: %s  EFFtime: %s\n", timestring, GPStime, SIGtime, EFFtime);
                             writeEFF();
                             if (!readEFFtime()) return (1);
                             while (findeFFtime(hh, mm, ss)){
@@ -526,8 +526,8 @@ int wiederholeSIGintervall = 0;
                                 //writeEFFdummies();
                                 writeEFFcopy();  /* 11 Nov 2003 - EFF immer ausgeben */
                             } /* endif */
-                            while (strcmp(GPSzeit, EFFzeit) > 0) {
-                                /* Es ist eine LÅcke in der GPS-Zeit aufgetreten, es mÅssen EFF-Zeilen Åberlesen werden */
+                            while (strcmp(GPStime, EFFtime) > 0) {
+                                /* Es ist eine LÅcke in der GPS-timestring aufgetreten, es mÅssen EFF-Zeilen Åberlesen werden */
                                 if (!readEFFtime()) return (1);
                             } /* endwhile */
                         }
@@ -537,7 +537,7 @@ int wiederholeSIGintervall = 0;
                     /* PrÅfen, ob die nÑchste Zeile im selben Intervall ist */
                     if (!readGPSline()) return (1);
                     while (writeGPStime(hh, mm, ss)){
-                        //printf("öberspringe nÑchste Zeile %s\n", GPSzeit);
+                        //printf("öberspringe nÑchste Zeile %s\n", GPStime);
                         if (!readGPSline()) return (1);
                     } /* endwhile */
 
