@@ -143,7 +143,7 @@ int schreibeSIG(void)
     return(1);
 }
 
-int schreibeSIGdummies(void)
+int writeSIGdummies(void)
 {
     if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
     if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
@@ -151,7 +151,7 @@ int schreibeSIGdummies(void)
     return(1);
 }
 
-int schreibeEFF(void)
+int writeEFF(void)
 {
     if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
     if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
@@ -165,7 +165,7 @@ int schreibeEFF(void)
     return(1);
 }
 
-int schreibeEFFcopy(void)
+int writeEFFcopy(void)
 {
     if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
     if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
@@ -177,7 +177,7 @@ int schreibeEFFcopy(void)
     return(1);
 }
 
-int schreibeEFFdummies(void)
+int writeEFFdummies(void)
 {
     if(!First_EFF_B_Found) return(1);   /* GSE-Datei erst mit erstem B in EFF-Datei schreiben */
     if(PauseGSEOutput)     return(1);   /* GSE-Datei-Ausgabe anhalten E -> B */
@@ -185,7 +185,7 @@ int schreibeEFFdummies(void)
     return(1);
 }
 
-int findeGPSzeit(int hh, int mm, int ss)
+int writeGPStime(int hh, int mm, int ss)
 {
 int s;
 int n;
@@ -201,7 +201,7 @@ int n;
     return (0); /* Nicht gefunden */
 }
 
-int leseGPSZeile(void)
+int readGPSline(void)
 {
 char zeile[200];
 char *p;
@@ -225,7 +225,7 @@ int  n = 0;
     return(1);
 }
 
-int findeSIGzeit(int hh, int mm, int ss)
+int findSIGtime(int hh, int mm, int ss)
 {
 int s;
 int n;
@@ -242,7 +242,7 @@ int n;
     return (0); /* Nicht gefunden */
 }
 
-int leseSIGZeile(void)
+int readSIGline(void)
 {
 char zeile[200];
 char *p;
@@ -308,7 +308,7 @@ int  n, m;
     return(1);
 }
 
-int findeEFFzeit(int hh, int mm, int ss)
+int findeFFtime(int hh, int mm, int ss)
 {
 int s;
 int n;
@@ -330,7 +330,7 @@ int n;
     return (0); /* Nicht gefunden */
 }
 
-int leseEFFZeile(void)
+int readEFFtime(void)
 {
 char zeile[200];
 char *p;
@@ -445,50 +445,50 @@ int hh, mm, ss;
 int SIGfound;   /* Flag fÅr SIG-Eintrag gefunden */
 int wiederholeSIGintervall = 0;
 
-    leseGPSZeile();
-    leseSIGZeile();
+    readGPSline();
+    readSIGline();
 
     /* 21 Feb 2004 JD: GSE erst mit erstem auftreten von B in EFF-Datei anfangen */
     /* EFF auf B pruefen und Datum lesen, wenn kein B, wiederholen */
     do {
-        leseEFFZeile();
+        readEFFtime();
     } while (EFFdata[2][0] != 'B'); /* enddo */
 
     /* Schleife Åber die Uhrzeit des Tages, Schritt 4 Sek */
     for (hh = 0; hh < 24; hh++) {
         for (mm = 0; mm < 60; mm++) {
             for (ss = 0; ss < 60; ss += interval) {
-                if (findeGPSzeit(hh, mm, ss)) {
+                if (writeGPStime(hh, mm, ss)) {
                     sprintf(zeit, "%02d:%02d:%02d", hh, mm, ss);
                     /* Einen GPS-Zeit-Eintrag gefunden, jetzt die anderen Dateien danach durchsuchen */
                     /* Der Block wird wiederholt, wenn mehrere SIG-Zeilen im 4-Sekunden-Intervall liegen */
                     do {
                         /* 21 Feb 2004 JD: Merker setzen, fuer erstes B in EFF-Datei */
-                        if (findeEFFzeit(hh, mm, ss)) First_EFF_B_Found = 1;
+                        if (findeFFtime(hh, mm, ss)) First_EFF_B_Found = 1;
                         writeGPS();
 
                         /* Die EintrÑge im SIG-File suchen */
-                        if (findeSIGzeit(hh, mm, ss)) {
+                        if (findSIGtime(hh, mm, ss)) {
                             /* Eine passende Zeile gefunden */
                             SIGfound = 1;
                             //printf("%s GPSzeit: %s SIGzeit: %s\n", zeit, GPSzeit, SIGzeit);
                             schreibeSIG();
 
                             /* Die nÑchste Zeile fÅr weitere PrÅfungen einlesen */
-                            //if (!leseSIGZeile()) {  /* Letzter SIG-Datensatz */
+                            //if (!readSIGline()) {  /* Letzter SIG-Datensatz */
                             //    /* 13 Mai 2004 - Das Ende von SIG ignorieren, erst mit Ende EFF abbrechen */
                             //    printf("ENDE SIG WIRD IGNORIERT!\n");
                             //    fprintf(fpGSE, "ENDE SIG WIRD IGNORIERT!\n");
                             //    break;
-                            //    //schreibeEFFcopy();
+                            //    //writeEFFcopy();
                             //    //return (1);
                             //}
 
                             /* Die nÑchste Zeile fÅr weitere PrÅfungen einlesen */
                             /* 4 Jun 2004 JD :Noch SIG-Zeilen da? Wenn nicht einfach mit den EFF fortfahren */
-                            if (leseSIGZeile()) {
+                            if (readSIGline()) {
                                 /* PrÅfe, ob nÑchste Zeile im selben Intervall liegt */
-                                if (findeSIGzeit(hh, mm, ss)){
+                                if (findSIGtime(hh, mm, ss)){
                                     wiederholeSIGintervall = 1;
                                 } else {
                                     wiederholeSIGintervall = 0;
@@ -498,47 +498,47 @@ int wiederholeSIGintervall = 0;
                         } else {
                             /* Keine zugehîrige Zeile gefunden */
                             SIGfound = 0;
-                            schreibeSIGdummies();
+                            writeSIGdummies();
                             while (strcmp(GPSzeit, SIGzeit) > 0) {
                                 /* Es ist eine LÅcke in der GPS-Zeit aufgetreten, es mÅssen SIG-Zeilen Åberlesen werden */
-                                if (!leseSIGZeile()) break; //return (1);
+                                if (!readSIGline()) break; //return (1);
                             } /* endwhile */
                             //printf("   %s GPSzeit: %s SIGzeit: %s\n", zeit, GPSzeit, SIGzeit);
                         }
 
                         /* Die EintrÑge im EFF-File suchen */
                         /* 21 Feb 2004 JD: EFF-Zeilen mit C werden ignoriert */
-                        if (findeEFFzeit(hh, mm, ss) && (EFFdata[2][0] != 'C')) {
+                        if (findeFFtime(hh, mm, ss) && (EFFdata[2][0] != 'C')) {
                             /* Eine passende Zeile gefunden */
                             //printf("%s GPSzeit: %s SIGzeit: %s  EFFzeit: %s\n", zeit, GPSzeit, SIGzeit, EFFzeit);
-                            schreibeEFF();
-                            if (!leseEFFZeile()) return (1);
-                            while (findeEFFzeit(hh, mm, ss)){
+                            writeEFF();
+                            if (!readEFFtime()) return (1);
+                            while (findeFFtime(hh, mm, ss)){
                                 /* öberspringe nÑchste Zeile, selbes Intervall */
-                                if (!leseEFFZeile()) return (1);
+                                if (!readEFFtime()) return (1);
                             } /* endwhile */
                         } else {
                             /* Keine zugehîrige Zeile gefunden */
                             if (SIGfound) {
                                 /* Den letzten gefundenen an den SIG anhÑngen */
-                                schreibeEFFcopy();
+                                writeEFFcopy();
                             } else {
-                                //schreibeEFFdummies();
-                                schreibeEFFcopy();  /* 11 Nov 2003 - EFF immer ausgeben */
+                                //writeEFFdummies();
+                                writeEFFcopy();  /* 11 Nov 2003 - EFF immer ausgeben */
                             } /* endif */
                             while (strcmp(GPSzeit, EFFzeit) > 0) {
                                 /* Es ist eine LÅcke in der GPS-Zeit aufgetreten, es mÅssen EFF-Zeilen Åberlesen werden */
-                                if (!leseEFFZeile()) return (1);
+                                if (!readEFFtime()) return (1);
                             } /* endwhile */
                         }
 
                     } while (wiederholeSIGintervall == 1); /* enddo */
 
                     /* PrÅfen, ob die nÑchste Zeile im selben Intervall ist */
-                    if (!leseGPSZeile()) return (1);
-                    while (findeGPSzeit(hh, mm, ss)){
+                    if (!readGPSline()) return (1);
+                    while (writeGPStime(hh, mm, ss)){
                         //printf("öberspringe nÑchste Zeile %s\n", GPSzeit);
-                        if (!leseGPSZeile()) return (1);
+                        if (!readGPSline()) return (1);
                     } /* endwhile */
 
                 } /* endif */
