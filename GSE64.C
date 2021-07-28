@@ -559,7 +559,7 @@ int main(int argc, char ** argv)
     };
 	
 	int c,index,val;
-	distance_calculation = "HAVER";
+	distance_calculation = 'HAVER';
 	
 	while ((c = getopt_long(argc, argv,"f:i::d::",long_options, &index)) != -1)
     switch (c)
