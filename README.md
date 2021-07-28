@@ -1,6 +1,6 @@
 # GSE
 ## Reimplementation of GSEmerge for modern computers (formerly by Geo-X, JD)
-Supports 64 bit machines and provides the additional following command line arguments:
+Supports 64 bit machines and supports the additional command line arguments:
 - *-f* or *--filename* (required) - filename of any of the 4 AudioVOR.exe export files (GPS, EFF, SIG, flt)
 - *-i* or *--interval* (optional, defaults to 4) - time interval \[s] used for binning location data
 
@@ -10,4 +10,4 @@ Usage: Command line tool to combine GPS-, SIG- and EFF data created by AudioVOR.
 
 Compiled and tested with: gcc 9.2.0 x64 windows (sample build script included)
 
-/bin contains precompiled binary created by the build.bat
+/bin contains precompiled binary for x64 systems as created by the build.bat
