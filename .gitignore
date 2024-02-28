@@ -1,3 +1,5 @@
 testdata/
-obj/
-bin/Debug
+/obj/
+/bin/
+/log/
+*.log

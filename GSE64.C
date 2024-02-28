@@ -524,7 +524,7 @@ int main(int argc, char ** argv)
 	  }
 	
        
-    printf("%s (c) Geo-X, %s\n", argv[0], __DATE__);
+    printf("%s Reworked by Sacha Viquerat, 2024. Original work (c) Geo-X\n", argv[0]);
 	printf("Setting coordinate interval to %d seconds\n", interval);
 	
     strip_ext(filename); //in place removal of file extension

@@ -1,2 +1,7 @@
-'gcc' is not recognized as an internal or external command,
-operable program or batch file.
+GSE64.c: In function 'gsemain':
+GSE64.c:472:21: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+                     if (!readGPSline()) return (1);
+                     ^~
+GSE64.c:474:6: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+      while (writeGPStime(hh, mm, ss)){
+      ^~~~~
